@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Couture Singer</title>
+<meta name="description" content="Guide de couture pas à pas pour machine Singer Tradition : ourlets, coutures, vêtements, outils et réglages.">
+<meta name="theme-color" content="#b23a48">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <button id="back" aria-label="Retour" hidden>‹</button>
+    <h1 id="title">Couture Singer</h1>
+    <button id="favbtn" aria-label="Favori" hidden>☆</button>
+  </header>
+  <main id="view" tabindex="-1"></main>
+  <nav id="nav" aria-label="Navigation principale">
+    <a href="#/" data-r="home"><span>🏠</span>Accueil</a>
+    <a href="#/guides" data-r="guides"><span>📚</span>Guides</a>
+    <a href="#/settings" data-r="settings"><span>⚙️</span>Réglages</a>
+    <a href="#/tools" data-r="tools"><span>✂️</span>Outils</a>
+    <a href="#/more" data-r="more"><span>☰</span>Plus</a>
+  </nav>
+</div>
+<div id="stepper" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="ill-core.js"></script>
+<script src="ill-plan.js"></script>
+<script src="data-base.js"></script>
+<script src="data-g1.js"></script>
+<script src="data-g2.js"></script>
+<script src="data-g3.js"></script>
+<script src="calcs.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
