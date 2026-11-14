@@ -93,6 +93,8 @@
     pl: (k, a) => { const f = PL[k]; if (!f) throw new Error('scène inconnue : ' + k); return wrap(f(a)); }
   };
   API.plKeys = Object.keys(PL);
+  API.add = o => { Object.assign(PL, o); API.plKeys = Object.keys(PL); };
+  window.IL2 = { iron, rulerV, pin, scis, footTop, stitches, note, zig };
   window.ILL = API;
   window.ILL.gauge = C.gauge; window.ILL.stitch = C.stitch; window.ILL.FN = C.FN;
 })();

@@ -23,6 +23,7 @@
   /* ---------- illustrations ---------- */
   function ill(spec, big) {
     if (!spec) return '';
+    if (Array.isArray(spec[0])) return spec.map(x => ill(x, big)).join('');
     try { const fn = ILL[spec[0]]; if (!fn) return ''; return `<div class="ill${big ? ' big' : ''}">${fn.apply(null, spec.slice(1))}</div>`; }
     catch (e) { console.error('illustration', spec, e); return ''; }
   }
@@ -74,7 +75,7 @@
       const val = saved[f.k] !== undefined ? saved[f.k] : f.v;
       return `<label>${esc(f.l)} (${esc(f.u)})<input data-k="${esc(f.k)}" type="number" inputmode="decimal" step="0.5" min="0" value="${esc(val)}"></label>`;
     }).join('');
-    return `<section class="calc" data-calc="${esc(key)}"><h3>🧮 ${esc(c.title)}</h3><div class="fields">${fld}</div><div class="res"></div></section>`;
+    return `<section class="calc" data-calc="${esc(key)}"><h3>🧮 ${esc(c.title)}</h3><div class="fields">${fld}</div><div class="res"></div>${window.PATTERNS && window.PATTERNS.DEF[key] ? `<a class="btn alt" style="display:block;margin-top:10px" href="#/pattern/${esc(key)}">🖨️ Imprimer le patron</a>` : ''}</section>`;
   }
   function wireCalc(root) {
     $$('.calc', root).forEach(box => {
@@ -131,6 +132,7 @@
       <h2>Raccourcis</h2>
       <div class="list">
         <a class="row" href="#/guide/hem-double"><span style="font-size:1.5rem">📏</span><span class="t"><b>Faire un ourlet</b><small>Le plus demandé</small></span><span class="chev">›</span></a>
+        <a class="row" href="#/patterns"><span style="font-size:1.5rem">🖨️</span><span class="t"><b>Patrons à imprimer</b><small>Taille réelle A4, jupe, robe, pantalon, T-shirt…</small></span><span class="chev">›</span></a>
         <a class="row" href="#/settings"><span style="font-size:1.5rem">⚙️</span><span class="t"><b>Réglages selon le tissu</b><small>Aiguille, longueur de point, tension</small></span><span class="chev">›</span></a>
         <a class="row" href="#/guide/r-problems"><span style="font-size:1.5rem">🛟</span><span class="t"><b>Ça ne marche pas ?</b><small>Points sautés, fil cassé, nid de fil…</small></span><span class="chev">›</span></a>
       </div>`;
@@ -160,7 +162,7 @@
       <p class="intro" style="margin-top:12px">${esc(g.intro)}</p>
       ${g.fabric ? `<p class="sm muted"><b>Tissus adaptés :</b> ${esc(g.fabric)}</p>` : ''}
       ${g.calc ? calcBox(g.calc) : ''}
-      ${tools.length ? `<section class="setbox"><h3>🧰 Outils et matériel</h3><div class="toolgrid">${tools.map(x => `<a class="tl" href="#/tools/${x.k}"><span class="em">${x.t.e}</span><span><b>${esc(x.t.n)}</b><small>${esc(x.t.u)}</small></span></a>`).join('')}</div></section>` : ''}
+      ${tools.length ? `<section class="setbox"><h3>🧰 Outils et matériel</h3><div class="toolgrid">${tools.map(x => `<a class="tl" href="#/tools/${x.k}"><span class="em" data-ph="tool:${x.k}">${x.t.e}</span><span><b>${esc(x.t.n)}</b><small>${esc(x.t.u)}</small></span></a>`).join('')}</div></section>` : ''}
       ${settingsBox(g.set)}
       <div class="cta"><button class="btn" id="go">▶ Mode pas à pas</button></div>
       <h2>Étapes détaillées</h2>
@@ -192,13 +194,13 @@
     if (id && DB.tools[id]) {
       const t = DB.tools[id]; setHead(t.n, { back: true });
       const used = GUIDES.filter(g => (g.tools || []).includes(id));
-      view.innerHTML = `<div class="card"><div style="font-size:2.4rem">${t.e}</div><h2 style="margin:6px 0">${esc(t.n)}</h2><p>${esc(t.u)}</p></div><h2>Utilisé dans</h2><div class="list">${used.map(guideRow).join('')}</div>`;
+      view.innerHTML = `<div class="card">${photoBox('tool:' + id, t.e)}<h2 style="margin:10px 0 6px">${esc(t.n)}</h2><p>${esc(t.u)}</p></div><h2>Utilisé dans</h2><div class="list">${used.map(guideRow).join('')}</div>`;
       return;
     }
     setHead('Outils et pieds');
-    view.innerHTML = `<h2>Pieds de la machine</h2><div class="list">${Object.keys(DB.feet).map(k => { const f = DB.feet[k]; return `<div class="fab"><h3>${esc(f.n)}</h3><div class="ill">${ILL.foot(k)}</div><p class="sm muted" style="margin:0">${esc(f.d)}</p></div>`; }).join('')}</div>
+    view.innerHTML = `<h2>Pieds de la machine</h2><div class="list">${Object.keys(DB.feet).map(k => { const f = DB.feet[k]; return `<div class="fab"><h3>${esc(f.n)}</h3>${photoBox('foot:' + k, '🦶')}<div class="ill">${ILL.foot(k)}</div><p class="sm muted" style="margin:0">${esc(f.d)}</p></div>`; }).join('')}</div>
       <h2>Aiguilles</h2><div class="ill">${ILL.needle('sizes')}</div><div class="ill">${ILL.needle('types')}</div><div class="ill">${ILL.needle('anat')}</div>
-      <h2>Outils à avoir</h2><div class="list">${Object.keys(DB.tools).map(k => { const t = DB.tools[k]; return `<a class="row" href="#/tools/${k}"><span style="font-size:1.5rem">${t.e}</span><span class="t"><b>${esc(t.n)}</b><small>${esc(t.u)}</small></span><span class="chev">›</span></a>`; }).join('')}</div>`;
+      <h2>Outils à avoir</h2><div class="list">${Object.keys(DB.tools).map(k => { const t = DB.tools[k]; return `<a class="row" href="#/tools/${k}"><span class="em2" data-ph="tool:${k}">${t.e}</span><span class="t"><b>${esc(t.n)}</b><small>${esc(t.u)}</small></span><span class="chev">›</span></a>`; }).join('')}</div>`;
   };
 
   V.search = () => {
@@ -224,6 +226,8 @@
   V.more = () => {
     setHead('Plus');
     view.innerHTML = `
+      <h2>Outils</h2>
+      <div class="list"><a class="row" href="#/patterns"><span style="font-size:1.5rem">🖨️</span><span class="t"><b>Patrons à imprimer</b><small>Taille réelle ou fiche de coupe</small></span><span class="chev">›</span></a></div>
       <h2>Aide</h2>
       <details class="card" open><summary>📲 Installer sur Android</summary><ol class="sm"><li>Ouvre l'adresse de l'application dans <b>Chrome</b>.</li><li>Menu ⋮ → <b>Installer l'application</b> (ou « Ajouter à l'écran d'accueil »).</li><li>L'icône apparaît sur ton téléphone ; elle fonctionne ensuite <b>sans connexion</b>.</li></ol></details>
       <details class="card"><summary>🧵 Vocabulaire de couture</summary><dl class="gl">${DB.glossary.map(x => `<dt>${esc(x[0])}</dt><dd>${esc(x[1])}</dd>`).join('')}</dl></details>
@@ -233,6 +237,108 @@
       <div class="cta"><button class="btn alt" id="clr">Effacer progression et favoris</button></div>
       <p class="sm muted">Couture Singer v1.0 · fonctionne hors connexion · aucune donnée envoyée.</p>`;
     $('#clr').onclick = () => { if (confirm('Effacer la progression et les favoris ?')) { store = { done: {}, fav: [], recent: null, calc: {} }; save(); toast('Données effacées'); } };
+  };
+
+
+
+  /* ---------- photos des outils : photos perso (appareil du téléphone) + photos libres déposées dans photos/ ---------- */
+  const idb = {
+    db: null,
+    open() { return new Promise((res, rej) => { if (this.db) return res(this.db); try { const r = indexedDB.open('couture-singer-photos', 1); r.onupgradeneeded = () => r.result.createObjectStore('p'); r.onsuccess = () => { this.db = r.result; res(this.db); }; r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); },
+    async get(k) { try { const db = await this.open(); return await new Promise(res => { const q = db.transaction('p').objectStore('p').get(k); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); }); } catch (e) { return null; } },
+    async set(k, v) { try { const db = await this.open(); return await new Promise(res => { const t = db.transaction('p', 'readwrite'); t.objectStore('p').put(v, k); t.oncomplete = () => res(true); t.onerror = () => res(false); }); } catch (e) { return false; } },
+    async del(k) { try { const db = await this.open(); return await new Promise(res => { const t = db.transaction('p', 'readwrite'); t.objectStore('p').delete(k); t.oncomplete = () => res(true); t.onerror = () => res(false); }); } catch (e) { return false; } }
+  };
+  let photoIndex = null; const urlCache = {};
+  async function loadPhotoIndex() {
+    if (photoIndex) return photoIndex; photoIndex = {};
+    try { const r = await fetch('photos/index.json', { cache: 'no-cache' }); if (r.ok) photoIndex = await r.json(); } catch (e) { }
+    return photoIndex;
+  }
+  async function photoFor(id) {
+    const own = await idb.get(id);
+    if (own) { if (urlCache[id]) URL.revokeObjectURL(urlCache[id]); urlCache[id] = URL.createObjectURL(own); return { url: urlCache[id], own: true }; }
+    const idx = await loadPhotoIndex(), e = idx[id];
+    return e && e.src ? { url: 'photos/' + e.src, credit: e.credit || '', link: e.link || '' } : null;
+  }
+  function hydrate(root) {
+    $$('[data-ph]', root || document).forEach(el => {
+      photoFor(el.dataset.ph).then(p => {
+        const box = el.closest('[data-phbox]');
+        if (!p) { if (box) { const d = $('[data-del]', box), c = $('.phcredit', box); if (d) d.hidden = true; if (c) c.textContent = 'Aucune photo pour l\'instant : prends la tienne avec le bouton 📷.'; } return; }
+        el.innerHTML = `<img src="${esc(p.url)}" alt="" loading="lazy">`; el.classList.add('has');
+        if (box) { const d = $('[data-del]', box), c = $('.phcredit', box); if (d) d.hidden = !p.own; if (c) c.innerHTML = p.own ? 'Ta photo (enregistrée sur ce téléphone)' : esc(p.credit) + (p.link ? ` · <a href="${esc(p.link)}" target="_blank" rel="noopener">source</a>` : ''); }
+      });
+    });
+  }
+  function photoBox(id, fallback) {
+    return `<div class="phbox" data-phbox="${esc(id)}"><div class="phimg" data-ph="${esc(id)}"><span class="phfb">${fallback}</span></div><div class="phbtns"><label class="btn alt sm">📷 Ajouter ma photo<input type="file" accept="image/*" capture="environment" hidden></label><button class="btn alt sm" data-del hidden>Supprimer</button></div><div class="phcredit sm muted"></div></div>`;
+  }
+  async function shrink(file) {
+    const bmp = await createImageBitmap(file), k = Math.min(1, 900 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k); c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    return await new Promise(res => c.toBlob(res, 'image/jpeg', 0.82));
+  }
+  document.addEventListener('change', async e => {
+    const inp = e.target; if (!inp.matches || !inp.matches('[data-phbox] input[type=file]') || !inp.files[0]) return;
+    const box = inp.closest('[data-phbox]'), id = box.dataset.phbox;
+    try { const blob = await shrink(inp.files[0]); if (!blob || !(await idb.set(id, blob))) throw new Error('save'); toast('Photo enregistrée ✔'); hydrate(box); }
+    catch (err) { toast('Impossible d\'enregistrer la photo'); }
+    inp.value = '';
+  });
+  document.addEventListener('click', async e => {
+    const b = e.target.closest && e.target.closest('[data-phbox] [data-del]'); if (!b) return;
+    const box = b.closest('[data-phbox]'), id = box.dataset.phbox;
+    if (!confirm('Supprimer ta photo ?')) return;
+    await idb.del(id); $('[data-ph]', box).innerHTML = '<span class="phfb">' + ($('.phimg', box).dataset.fb || '🧵') + '</span>'; $('[data-ph]', box).classList.remove('has'); hydrate(box); toast('Photo supprimée');
+  });
+
+  /* ---------- patrons imprimables ---------- */
+  const PT = window.PATTERNS;
+  function patValues(key) {
+    const c = CALCS[key], saved = (store.calc && store.calc[key]) || {}, v = {};
+    c.fields.forEach(f => { const x = parseFloat(saved[f.k]); v[f.k] = isFinite(x) && x > 0 ? x : f.v; });
+    return v;
+  }
+  function printRoot() { let r = $('#printroot'); if (!r) { r = document.createElement('div'); r.id = 'printroot'; document.body.appendChild(r); } return r; }
+  window.addEventListener('afterprint', () => { const r = $('#printroot'); if (r) r.innerHTML = ''; });
+  V.patterns = () => {
+    setHead('Patrons à imprimer', { back: false });
+    view.innerHTML = `<p class="muted">Imprime tes patrons à la taille réelle sur du papier A4 (ou enregistre-les en PDF). Les dimensions suivent tes mesures.</p>
+      <div class="list">${Object.keys(PT.DEF).map(k => { const d = PT.DEF[k]; const b = PT.build(k, patValues(k)); return `<a class="row" href="#/pattern/${k}"><span style="font-size:1.6rem">${d.tiled ? '📐' : '📄'}</span><span class="t"><b>${esc(d.title)}</b><small>${esc(b.summary.join(' · '))}</small></span><span class="chev">›</span></a>`; }).join('')}</div>
+      <details class="card" style="margin-top:14px"><summary>Comment imprimer ?</summary><ol class="sm"><li>Choisis un patron, entre tes mesures.</li><li>Appuie sur <b>Imprimer</b>, puis « Enregistrer au format PDF » ou ton imprimante.</li><li>Choisis le papier <b>A4</b>, l'échelle <b>100 % / taille réelle</b> (pas « ajuster à la page »).</li><li>Vérifie que le carré de contrôle mesure bien 10 cm, puis assemble les pages au ruban adhésif.</li></ol></details>`;
+  };
+  V.pattern = (key) => {
+    const d = PT.DEF[key];
+    if (!d || !CALCS[key]) { V.patterns(); return; }
+    setHead(d.title, { back: true });
+    const c = CALCS[key], v = patValues(key);
+    view.innerHTML = `<div class="calc" data-pat="${esc(key)}"><h3>📏 Tes mesures</h3><div class="fields">${c.fields.map(f => `<label>${esc(f.l)} (${esc(f.u)})<input data-k="${esc(f.k)}" type="number" inputmode="decimal" step="0.5" min="0" value="${esc(v[f.k])}"></label>`).join('')}</div></div>
+      <div id="patout"></div>`;
+    const out = $('#patout');
+    const draw = () => {
+      const cur = {}; let ok = true;
+      $$('[data-pat] [data-k]', view).forEach(el => { const x = parseFloat(String(el.value).replace(',', '.')); cur[el.dataset.k] = x; if (!isFinite(x) || x <= 0) ok = false; });
+      if (!ok) { out.innerHTML = '<p class="muted">Renseigne toutes les mesures.</p>'; return; }
+      store.calc[key] = cur; save();
+      const b = PT.build(key, cur);
+      let h = '';
+      if (b.tiled.length) {
+        h += `<h2>Pièces à imprimer (taille réelle)</h2>` + b.tiled.map((t, i) => `<label class="pcs"><input type="checkbox" data-want="${esc(t.id)}" checked><span><b>${esc(t.pc.name)}</b> — ${t.pages.length} pages A4 (${t.cols} × ${t.rows})<br><small class="muted">${esc(t.pc.sub)}</small></span></label>
+          <div class="ill pv"><svg viewBox="${t.bbox.map(n => Math.round(n)).join(' ').replace(/^(\S+) (\S+) (\S+) (\S+)$/, (m, x, y, X, Y) => x + ' ' + y + ' ' + (X - x) + ' ' + (Y - y))}" preserveAspectRatio="xMidYMid meet">${t.group}</svg></div><div class="tmw">${PT.tileMap(t)}</div>`).join('');
+      }
+      if (b.pages.length) {
+        h += `<h2>${b.tiled.length ? 'Aussi inclus' : 'Fiche de coupe'}</h2>` + b.pages.map(p => `<div class="ill pv paper">${p.indexOf('<svg') === 0 ? p : p}</div>`).join('');
+      }
+      h += `<div class="cta"><button class="btn" id="doprint">🖨️ Imprimer / Enregistrer en PDF</button></div><p class="sm muted">Choisis « A4 » et une échelle de <b>100 %</b> dans la fenêtre d'impression. Sur Android : Imprimer → « Enregistrer au format PDF ».</p>`;
+      out.innerHTML = h;
+      $('#doprint').onclick = () => {
+        const want = $$('[data-want]', out).filter(x => x.checked).map(x => x.dataset.want);
+        if (b.tiled.length && !want.length) { toast('Coche au moins une pièce'); return; }
+        printRoot().innerHTML = PT.printHtml(b, want); setTimeout(() => window.print(), 60);
+      };
+    };
+    view.addEventListener('input', draw); draw();
   };
 
   /* ---------- mode pas à pas ---------- */
@@ -263,14 +369,15 @@
     const h = (location.hash || '#/').replace(/^#\/?/, '').split('/');
     const r = h[0] || 'home', a = decodeURIComponent(h[1] || '');
     stepper.hidden = true;
-    let nav = r;
+    let nav = r; if (r === 'patterns' || r === 'pattern') nav = 'more';
+    { const pr = $('#printroot'); if (pr) pr.innerHTML = ''; }
     if (r === 'cat') { V.guides(a); nav = 'guides'; }
     else if (r === 'guide') { V.guide(a); nav = 'guides'; }
     else if (V[r]) V[r](a);
     else V.home();
     if (r === 'search') nav = 'guides';
     $$('#nav a').forEach(el => el.classList.toggle('on', el.dataset.r === (nav === 'cat' ? 'guides' : nav)));
-    view.scrollTop = 0; fit(view);
+    view.scrollTop = 0; fit(view); hydrate(view);
   }
   window.addEventListener('hashchange', route);
   backBtn.onclick = () => { if (history.length > 1) history.back(); else location.hash = '#/'; };
